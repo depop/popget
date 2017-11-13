@@ -24,7 +24,7 @@ eg
 
 .. code:: python
 
-	from popget.client import APIClient, GetEndpoint
+    from popget.client import APIClient, GetEndpoint
 
     class ThingServiceClient(APIClient):
 
@@ -77,7 +77,7 @@ e.g.
 
 .. code:: python
 
-	from popget.client import APIClient, APIEndpoint
+    from popget.client import APIClient, APIEndpoint
 
     class ThingServiceClient(APIClient):
 
@@ -128,7 +128,7 @@ And for calls with a request body:
 
 .. code:: python
 
-	from popget.client import APIClient, PostEndpoint, FORM_ENCODED
+    from popget.client import APIClient, PostEndpoint, FORM_ENCODED
 
     class ThingServiceClient(APIClient):
 
