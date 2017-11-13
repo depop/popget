@@ -1,0 +1,4 @@
+flexisettings>=1.0,<1.1
+requests>2.0,<3.0
+typing>=3.6.2,<4.0
+six
