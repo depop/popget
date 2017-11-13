@@ -3,7 +3,7 @@ popget
 
 |Build Status|
 
-.. |Build Status| image:: https://circleci.com/gh/depop/popget.svg?style=shield&circle-token=a9ea2909c5cbc4cb32a87f50444ca79b99e3b09c
+.. |Build Status| image:: https://circleci.com/gh/depop/popget.svg?style=shield&circle-token=66ab09119c495365d662fe170e5efcc4467e3b37
     :alt: Build Status
 
 A simple no-bells-and-whistles REST-API client.
