@@ -8,7 +8,7 @@ popget
 
 A simple no-bells-and-whistles REST-API client.
 
-We use this for service--to-service requests in our heterogenous
+We use this for service-to-service requests in our heterogenous
 microservices environment.
 
 Usage
