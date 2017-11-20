@@ -1,261 +1,26 @@
-import string
-from six import add_metaclass, string_types
-from typing import Any, Callable, Dict, Optional, Set, Type, Union  # noqa
+from functools import partial
+from six import add_metaclass
+from typing import Any, Callable, Dict, Optional, Set, Tuple, Type, TypeVar, Union  # noqa
 
+from mypy_extensions import Arg, DefaultArg, KwArg
 import requests
 from requests.exceptions import Timeout
 
 from popget.conf import settings
+from popget.endpoint import APIEndpoint
+from popget.errors import MissingRequiredArg
 from popget.extratypes import ResponseTypes  # noqa
-from popget.utils import update_nested
+from popget.utils import classproperty, get_base_attr, update_nested
 
 
-JSON = 'json'
-
-FORM_ENCODED = 'data'
-
-
-class MissingRequiredArg(TypeError):
-    pass
+ClientMethod = Callable[
+    [Arg(Type['APIClient'], 'cls'), DefaultArg(Optional[Dict[Any, Any]], '_request_kwargs'), KwArg(object)],
+    Union[ResponseTypes, object]
+]
 
 
-class ArgNameConflict(ValueError):
-    pass
-
-
-def _validate_arg_name(arg, arg_type, reserved):
-    """
-    Validate that `arg` does not conflict with names already defined in
-    `reserved`.
-
-    Kwargs:
-        arg (str): the arg name to validate
-        arg_type (str): a description for the arg type, to use in exception
-            message if conflicting
-        reserved (Set[str]): reserved arg names
-
-    Returns:
-        str: validated arg name
-    """
-    if arg in reserved:
-        raise ArgNameConflict(
-            '{arg_type} arg `{arg}` conflicts with a reserved arg name.'.format(
-                arg_type=arg_type,
-                arg=arg,
-            )
-        )
-    return arg
-
-
-class APIEndpoint(object):
-    """
-    Params from url path (format string), querystring and request headers
-    (format string of value portion) will be extracted and made available
-    as kwargs on the resulting method call.
-
-    This means arg names must be unique across all three sources of args.
-    This is feasible because path and header args can be freely chosen when
-    implementing the client (they are just format string identifiers rather
-    than part of the REST API itself like querystring args are).
-
-    e.g.
-
-        class ThingServiceClient(APIClient):
-
-            get_things = APIEndpoint(
-                'GET',
-                '/things/{user_id}/',  # url format string
-                querystring_args=(
-                    ('type', True),  # required arg
-                    'offset_id',
-                    'limit',
-                ),
-                request_headers={
-                    'Authorization': 'Bearer {access_token}'
-                }
-            )
-
-    This will give you a client with a `get_things` method you can call like:
-
-        response_data = ThingServiceClient.get_things(
-            user_id=123,
-            type='cat',
-            offset_id='65345ff34e344ab53c',
-            limit=20,
-            access_token='87a64c98b62d39e8625f',
-        )
-
-    You can still pass extra args down into the `requests` lib on a per-call
-    basis by using `_request_kwargs`:
-
-        response_data = ThingServiceClient.get_things(
-            user_id=123,
-            type='cat',
-            offset_id='65345ff34e344ab53c',
-            limit=20,
-            access_token='87a64c98b62d39e8625f',
-            _request_kwargs={
-                'headers': {
-                    'X-Depop-WTF': 'something something'
-                }
-            },
-        )
-
-    And for calls with a request body:
-
-        class ThingServiceClient(APIClient):
-
-            new_thing = APIEndpoint(
-                'POST',
-                '/things/',
-                body_required=True,
-                body_type=FORM_ENCODED,
-                request_headers={
-                    'Authorization': 'Bearer {access_token}',
-                    'Content-Type': 'application/json; charset=utf-8'
-                }
-            )
-
-        response_data = ThingServiceClient.new_thing(
-            access_token='87a64c98b62d39e8625f',
-            body={
-                'type': 'dog',
-                'name': 'fido',
-            }
-        )
-    """
-
-    RESERVED_NAMES = ('_request_kwargs',)
-
-    method = None  # type: str
-    path = None  # type: str
-
-    body_type = None  # type: str
-    body_arg = None  # type: str
-
-    request_headers = None  # type: Optional[Dict[str, str]]
-
-    required_args = None  # type: Set[str]
-    url_args = None  # type: Set[str]
-    querystring_args = None  # type: Set[str]
-    request_header_args = None  # type: Dict[str, Set[str]]
-
-    def __init__(self, method, path, querystring_args=None, request_headers=None,
-                 body_type=JSON, body_arg='body', body_required=False):
-        """
-        Kwargs:
-            method (str): 'GET', 'POST' etc
-            path (str): path portion of url (appended to `APIClient.base_url`)
-            querystring_args (Optional[Tuple[Union[Tuple[str, bool], str]]]):
-                if given, tuple of non-required arg names, or (<arg name>, True)
-                for required args
-            request_headers (Optional[Dict[str, str]]): if given, a dict of
-                request headers which will be applied to all requests
-            body_type (str): which kwarg in `requests` lib to use for request
-                body, e.g. "data" for form-encoded or "json" for JSON encoded
-                (in both cases just pass a python dict in the call)
-            body_arg (str): `body_arg` will be made available as a kwarg in the
-                resulting client method, as such it needs a unique name. If the
-                default name, "body", is needed as a querystring arg then
-                specify a custom arg name here.
-        """
-        f = string.Formatter()
-
-        reserved = set(self.RESERVED_NAMES)
-        all_args = set()
-        required_args = set()
-
-        # request body arg
-        all_args.add(
-            _validate_arg_name(body_arg, '`body_arg`', reserved)
-        )
-        reserved.add(body_arg)
-        if body_required:
-            required_args.add(body_arg)
-
-        # parse url args
-        url_args = set()
-        for tokens in f.parse(path):
-            if tokens[1] is not None:
-                all_args.add(
-                    _validate_arg_name(tokens[1], 'Url', reserved)
-                )
-                url_args.add(tokens[1])
-                required_args.add(tokens[1])  # all url args are required
-
-        # parse querystring args
-        querystring_args_ = set()
-        if querystring_args is not None:
-            for arg in querystring_args:
-                if isinstance(arg, string_types):
-                    required = False
-                else:
-                    arg, required = arg
-                all_args.add(
-                    _validate_arg_name(arg, 'Querystring', reserved)
-                )
-                if required:
-                    required_args.add(arg)
-                querystring_args_.add(arg)
-
-        # parse request-header args
-        request_header_args = {}
-        if request_headers is not None:
-            for header, value in request_headers.items():
-                for tokens in f.parse(value):
-                    if tokens[1] is not None:
-                        all_args.add(
-                            _validate_arg_name(tokens[1], 'Request-header', reserved)
-                        )
-                        request_header_args.setdefault(header, set()).add(tokens[1])
-                        required_args.add(tokens[1])  # all request-header args are required
-
-        self.method = method.lower()
-        self.path = path
-
-        self.body_type = body_type
-        self.body_arg = body_arg
-
-        self.request_headers = request_headers
-
-        self.required_args = required_args
-        self.url_args = url_args
-        self.querystring_args = querystring_args_
-        self.request_header_args = request_header_args
-
-
-class GetEndpoint(APIEndpoint):
-
-    def __init__(self, *args, **kwargs):
-        super(GetEndpoint, self).__init__('GET', *args, **kwargs)
-
-
-class PostEndpoint(APIEndpoint):
-
-    def __init__(self, *args, **kwargs):
-        super(PostEndpoint, self).__init__('POST', *args, **kwargs)
-
-
-class PatchEndpoint(APIEndpoint):
-
-    def __init__(self, *args, **kwargs):
-        super(PatchEndpoint, self).__init__('PATCH', *args, **kwargs)
-
-
-class PutEndpoint(APIEndpoint):
-
-    def __init__(self, *args, **kwargs):
-        super(PutEndpoint, self).__init__('PUT', *args, **kwargs)
-
-
-class DeleteEndpoint(APIEndpoint):
-
-    def __init__(self, *args, **kwargs):
-        super(DeleteEndpoint, self).__init__('DELETE', *args, **kwargs)
-
-
-def method_factory(endpoint):
-    # type: (APIEndpoint) -> Callable[[Any], ResponseTypes]
+def method_factory(endpoint, client_method_name):
+    # type: (APIEndpoint, str) -> ClientMethod
     """
     Kwargs:
         endpoint: the endpoint to generate a callable method for
@@ -266,18 +31,15 @@ def method_factory(endpoint):
         In turn the method returns response content, either string or
         deserialized JSON data.
     """
-    def client_method(cls, _request_kwargs=None, **call_kwargs):
-        # type: (Type[APIClient], Optional[Dict], **object) -> ResponseTypes
+    def _prepare_request(base_url, _request_kwargs=None, **call_kwargs):
+        # type: (str, Optional[Dict], **object) -> Tuple[str, Dict[str, object]]
         """
         Kwargs:
-            _request_kwargs (dict): extra kwargs to pass into the underlying
+            base_url: base url of API
+            _request_kwargs: extra kwargs to pass into the underlying
                 `requests` lib method
             **call_kwargs: expected args for the endpoint (url, querystring,
                 request-headers etc)
-
-        Returns:
-            Union[str, dict]: response content, either string or deserialized
-            JSON data if response had 'application/json' content-type header.
         """
         for required in endpoint.required_args:
             if required not in call_kwargs:
@@ -308,7 +70,7 @@ def method_factory(endpoint):
             request_headers[header] = endpoint.request_headers[header].format(**header_kwargs)
 
         url_template = '{base_url}/{path}'.format(
-            base_url=cls.base_url.rstrip('/'),
+            base_url=base_url.rstrip('/'),
             path=endpoint.path.lstrip('/'),
         )
         url = url_template.format(**url_args)
@@ -325,9 +87,43 @@ def method_factory(endpoint):
         if _request_kwargs is not None:
             update_nested(request_kwargs, _request_kwargs)
 
-        return cls._make_request(endpoint.method, url, **request_kwargs)
+        return url, request_kwargs
+
+    def client_method(cls, _request_kwargs=None, **call_kwargs):
+        # type: (Type[APIClient], Optional[Dict], **object) -> Union[ResponseTypes, object]
+        """
+        Returns:
+            Response... for non-async clients this will be response content,
+            either string or deserialized JSON data if response had
+            'application/json' content-type header.
+            For async clients this will be some type of future.
+        """
+        url, request_kwargs = _prepare_request(
+            base_url=cls._config.base_url,
+            _request_kwargs=_request_kwargs,
+            **call_kwargs
+        )
+        return getattr(cls, client_method_name)(endpoint.method, url, **request_kwargs)
 
     return client_method
+
+
+class ConfigClass(object):
+
+    base_url = None  # type: str
+    _session = None  # type: requests.Session
+
+    def __init__(self, config):
+        self.base_url = getattr(config, 'base_url', '')
+
+    @classproperty
+    def session(cls):
+        # type: () -> requests.Session
+        if not cls._session:
+            session = requests.Session()
+            session.headers['User-Agent'] = settings.CLIENT_DEFAULT_USER_AGENT
+            cls._session = session
+        return cls._session
 
 
 class APIClientMetaclass(type):
@@ -341,7 +137,8 @@ class APIClientMetaclass(type):
 
         class ThingServiceClient(APIClient):
 
-            base_url = 'http://things.depop.com'
+            class Config:
+                base_url = 'http://things.depop.com'
 
             get_things = GetEndpoint(
                 '/things/{user_id}/',  # url format string
@@ -361,18 +158,25 @@ class APIClientMetaclass(type):
     We use `raise_for_status` so anything >= 400 will raise a `requests.HTTPError`.
     """
 
+    config_class = ConfigClass
+
+    @staticmethod
+    def add_methods_for_endpoint(methods, name, endpoint, config):
+        # type: (Dict[str, classmethod], str, APIEndpoint, Any) -> None
+        methods[name] = classmethod(method_factory(endpoint, '_make_request'))
+
     def __new__(cls, name, bases, attrs):
+        base_config = get_base_attr('Config', bases, attrs)
+        attrs['_config'] = config = cls.config_class(base_config)
+
         methods = {}
         attr_list = list(attrs.items())
         for name, endpoint in attr_list:
             if not isinstance(endpoint, APIEndpoint):
                 continue
-            methods[name] = classmethod(method_factory(endpoint))
+            cls.add_methods_for_endpoint(methods, name, endpoint, config)
             del attrs[name]
         attrs.update(methods)
-        session = requests.Session()
-        session.headers['User-Agent'] = settings.CLIENT_DEFAULT_USER_AGENT
-        attrs['_r'] = session
         return type.__new__(cls, name, bases, attrs)
 
 
@@ -409,27 +213,35 @@ def get_response_body(response):
 @add_metaclass(APIClientMetaclass)
 class APIClient(object):
 
-    base_url = ''
-    _r = None  # type: requests.Session
+    _config = None  # type: ConfigClass
 
-    @classmethod
-    def _add_timeout_and_handle(cls, method, url, *args, **kwargs):
-        # type: (str, str, *Any, **Any) -> requests.Response
+    @staticmethod
+    def _request_kwargs(method, url, args, kwargs):
+        # type: (str, str, Tuple[Any, ...], Dict[str, Any]) -> None
+
+        if settings.CLIENT_DISABLE_VERIFY_SSL:
+            kwargs['verify'] = False
 
         # all requests should contain a default timeout value
-        if kwargs.get('timeout') is None:
+        if 'timeout' not in kwargs:
             kwargs['timeout'] = settings.CLIENT_TIMEOUT
 
+    @staticmethod
+    def handle(call, request_url):
+        # type: (Callable[[], requests.Response], str) -> ResponseTypes
+
         try:
-            res = getattr(cls._r, method)(url, *args, **kwargs)
+            res = call()
         except Timeout as e:
+            # generate a proxy 504 'Gateway Timeout' response
             res = requests.Response()
             res.request = e.request
-            res.url = url
+            res.url = request_url
             res.reason = str(e)
             res.status_code = 504
 
-        return res
+        res.raise_for_status()
+        return get_response_body(res)
 
     @classmethod
     def _make_request(cls, method, url, *args, **kwargs):
@@ -450,10 +262,6 @@ class APIClient(object):
             response content, either string or deserialized JSON data if
             response had 'application/json' content type header.
         """
-        if settings.CLIENT_DISABLE_VERIFY_SSL:
-            kwargs['verify'] = False
-
-        res = cls._add_timeout_and_handle(method, url, *args, **kwargs)
-
-        res.raise_for_status()
-        return get_response_body(res)
+        cls._request_kwargs(method, url, args, kwargs)
+        call = partial(getattr(cls._config.session, method), url, *args, **kwargs)
+        return cls.handle(call, url)
