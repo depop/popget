@@ -5,14 +5,10 @@ import pytest
 import requests
 import responses
 
+from popget import APIClient, BodyType
 from popget.conf import settings
-from popget.client import (
-    APIEndpoint,
-    APIClient,
-    ArgNameConflict,
-    MissingRequiredArg,
-    FORM_ENCODED,
-)
+from popget.endpoint import APIEndpoint
+from popget.errors import ArgNameConflict, MissingRequiredArg
 
 
 def test_method_and_path():
@@ -222,7 +218,8 @@ def test_request_header_args_clash():
 
 class DummyService(APIClient):
 
-    base_url = 'http://baseurl.com/'
+    class Config:
+        base_url = 'http://baseurl.com/'
 
     thing_detail = APIEndpoint(
         'GET',
@@ -231,7 +228,7 @@ class DummyService(APIClient):
     thing_update = APIEndpoint(
         'PATCH',
         '/v1/thing/{id}',
-        body_type=FORM_ENCODED,
+        body_type=BodyType.FORM_ENCODED,
     )
     thing_create = APIEndpoint(
         'POST',
@@ -419,6 +416,8 @@ def test_timeout():
     """
     Test APIClient behaviour when the requests library timeout threshold is reached
     """
-    with pytest.raises(requests.exceptions.HTTPError) as e:
+    with pytest.raises(requests.exceptions.HTTPError) as exc_info:
         DummyService.thing_detail(id=777)
-        assert e.response.status_code == 504
+
+    e = exc_info.value
+    assert e.response.status_code == 504

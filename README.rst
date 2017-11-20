@@ -6,7 +6,7 @@ popget
 .. |Build Status| image:: https://circleci.com/gh/depop/popget.svg?style=shield&circle-token=66ab09119c495365d662fe170e5efcc4467e3b37
     :alt: Build Status
 
-A simple no-bells-and-whistles REST-API client.
+A simple no-bells-and-whistles REST-API client, optionally supporting async requests.
 
 We use this for service-to-service requests in our heterogenous
 microservices environment.
@@ -24,11 +24,12 @@ eg
 
 .. code:: python
 
-    from popget.client import APIClient, GetEndpoint
+    from popget import APIClient, GetEndpoint
 
     class ThingServiceClient(APIClient):
 
-        base_url = 'http://things.depop.com'
+        class Config:
+            base_url = 'http://things.depop.com'
 
         get_things = GetEndpoint(
             '/things/{user_id}/',  # url format string
@@ -77,9 +78,13 @@ e.g.
 
 .. code:: python
 
-    from popget.client import APIClient, APIEndpoint
+    from popget import APIClient
+    from popget.endpoint import APIEndpoint
 
     class ThingServiceClient(APIClient):
+
+        class Config:
+            base_url = 'http://things.depop.com'
 
         get_things = APIEndpoint(
             'GET',
@@ -128,14 +133,17 @@ And for calls with a request body:
 
 .. code:: python
 
-    from popget.client import APIClient, PostEndpoint, FORM_ENCODED
+    from popget import APIClient, PostEndpoint, BodyType
 
     class ThingServiceClient(APIClient):
+
+        class Config:
+            base_url = 'http://things.depop.com'
 
         new_thing = PostEndpoint(
             '/things/',
             body_required=True,
-            body_type=FORM_ENCODED,
+            body_type=BodyType.FORM_ENCODED,
             request_headers={
                 'Authorization': 'Bearer {access_token}',
                 'Content-Type': 'application/json; charset=utf-8'
@@ -149,6 +157,65 @@ And for calls with a request body:
             'name': 'fido',
         }
     )
+
+Asynchronous
+~~~~~~~~~~~~
+
+Optional support for asynchronous requests is provided, via a ``requests-futures`` backend.
+
+``pip install popget[threadpool]``
+
+An async variant of the ``APIClient`` is provided which will have both async and blocking
+versions of all endpoint methods.
+
+.. code:: python
+
+    from popget import GetEndpoint
+    from popget.async.threadpool import APIClient
+    import requests
+
+    class ThingServiceClient(APIClient):
+
+        class Config:
+            base_url = 'http://things.depop.com'
+
+        get_things = GetEndpoint(
+            '/things/{user_id}/',  # url format string
+            (('type', True),),     # required querystring param (validated on call)
+        )
+
+    # blocking:
+    data = ThingServiceClient.get_things(user_id=2345, type='cat')
+
+    # async:
+    future = ThingServiceClient.async_get_things(user_id=2345, type='cat')
+    # response is parsed and may raise, as for blocking requests
+    try:
+        data = future.result()
+    except requests.exceptions.HTTPError as e:
+        print(repr(e))
+
+The async endpoint methods will return a standard ``concurrent.futures.Future`` object.
+
+See `Python docs <https://docs.python.org/dev/library/concurrent.futures.html>`_.
+
+You can customise the name of the generated async endpoint methods:
+
+.. code:: python
+
+    class ThingServiceClient(APIClient):
+
+        class Config:
+            base_url = 'http://things.depop.com'
+            async_method_template = '{}__async'
+
+        get_things = GetEndpoint(
+            '/things/{user_id}/',  # url format string
+            (('type', True),),     # required querystring param (validated on call)
+        )
+
+    future = ThingServiceClient.get_things__async(user_id=2345, type='cat')
+
 
 Compatibility
 -------------

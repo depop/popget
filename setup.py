@@ -46,10 +46,17 @@ setup(
         'requests>2.0,<3.0',
         'typing>=3.6.2,<4.0',
         'six',
+        'enum34>=1.1.6,<2.0.0; python_version < "3.4"',
+        'futures>=3.1.1,<3.2.0; python_version < "3.2"',
+        'mypy_extensions==0.3.0; python_version < "3.2"',
     ],
+    extras_require={
+        'threadpool':  ['requests-futures>=0.9.7,<1.0.0'],
+    },
 
     packages=[
         'popget',
+        'popget.async',
         'popget.conf',
     ],
 )
