@@ -7,7 +7,7 @@ import responses
 
 from popget import APIClient, BodyType
 from popget.conf import settings
-from popget.endpoint import APIEndpoint
+from popget.endpoint import APIEndpoint, Arg
 from popget.errors import ArgNameConflict, MissingRequiredArg
 
 
@@ -95,20 +95,20 @@ def test_url_args_clash():
 
 def test_querystring_args_ok():
     """
-    Querystring args are supported in both tuple and string form.
-    When specified via a tuple it is possible to mark the arg as required.
+    Querystring args are supplied as iterable of Arg objects.
     """
+    qs_args = [
+        Arg('role', required=True),  # required
+        Arg('offset'),  # optional
+        Arg('limit', default=25),  # with default
+    ]
     endpoint = APIEndpoint(
         'GET',
         '/users/{user_id}/feedback/',
-        querystring_args=(
-            ('role', True),  # required
-            ('offset', False),  # optional
-            'limit',  # optional
-        ),
+        querystring_args=qs_args,
     )
     assert endpoint.url_args == {'user_id'}
-    assert endpoint.querystring_args == {'role', 'offset', 'limit'}
+    assert endpoint.querystring_args == set(qs_args)
     assert endpoint.required_args == {'user_id', 'role'}
 
 
@@ -121,7 +121,7 @@ def test_querystring_args_clash():
         APIEndpoint(
             'GET',
             '/users/{user_id}/feedback/',
-            querystring_args=('body',),
+            querystring_args=[Arg('body')],
         )
 
     # reserved name clash
@@ -129,18 +129,19 @@ def test_querystring_args_clash():
         APIEndpoint(
             'GET',
             '/users/{user_id}/feedback/',
-            querystring_args=('_request_kwargs',),
+            querystring_args=[Arg('_request_kwargs')],
         )
 
     # if same arg name appears in url and querystring it's assumed you
     # want to use the same value for both
+    qs_arg = Arg('user_id')
     endpoint = APIEndpoint(
         'GET',
         '/users/{user_id}/feedback/',
-        querystring_args=('user_id',),
+        querystring_args=[qs_arg],
     )
     assert endpoint.url_args == {'user_id'}
-    assert endpoint.querystring_args == {'user_id'}
+    assert endpoint.querystring_args == {qs_arg}
 
 
 def test_request_header_args_ok():
@@ -202,15 +203,16 @@ def test_request_header_args_clash():
     }
     # if same arg name appears in request-headers and querystring args
     # it's assumed you want to use the same value for both
+    qs_arg = Arg('role')
     endpoint = APIEndpoint(
         'GET',
         '/users/feedback/',
-        querystring_args=('role',),
+        querystring_args=[qs_arg],
         request_headers={
             'X-Depop-Role': '{role}',
         },
     )
-    assert endpoint.querystring_args == {'role'}
+    assert endpoint.querystring_args == {qs_arg}
     assert endpoint.request_header_args == {
         'X-Depop-Role': {'role'},
     }
@@ -240,10 +242,11 @@ class DummyService(APIClient):
     thing_list = APIEndpoint(
         'GET',
         '/v1/thing/',
-        querystring_args=(
-            ('type', True),  # required
-            'whatever',  # optional
-        ),
+        querystring_args=[
+            Arg('type', required=True),  # required
+            Arg('whatever'),  # optional
+            Arg('extra', default='stuff'),  # with default
+        ],
     )
     thing_delete = APIEndpoint(
         'DELETE',
@@ -309,7 +312,7 @@ def test_get_missing_url_arg():
 @responses.activate
 def test_get_with_querystring():
     """
-    Get request with querystring args.
+    Get request with querystring args. Default value is sent if not supplied.
     """
     def callback(request):
         query = urlparse.parse_qs(urlparse.urlparse(request.url).query)
@@ -317,6 +320,7 @@ def test_get_with_querystring():
         assert query == {
                 'type': ['chair'],
                 'whatever': ['upholstery'],
+                'extra': ['stuff'],  # arg default value filled
             }
         return (200, {}, '[{"thing": "Chippendale"}]')
 
@@ -325,6 +329,28 @@ def test_get_with_querystring():
                            content_type='application/json')
 
     DummyService.thing_list(type='chair', whatever='upholstery')
+
+
+@responses.activate
+def test_get_with_querystring_send_default():
+    """
+    Get request with querystring args. Default value is overridden if supplied.
+    """
+    def callback(request):
+        query = urlparse.parse_qs(urlparse.urlparse(request.url).query)
+        # expected querystring args were passed:
+        assert query == {
+                'type': ['chair'],
+                'whatever': ['upholstery'],
+                'extra': ['more'],  # arg default value overridden
+            }
+        return (200, {}, '[{"thing": "Chippendale"}]')
+
+    responses.add_callback(responses.GET, 'http://baseurl.com/v1/thing/',
+                           callback=callback,
+                           content_type='application/json')
+
+    DummyService.thing_list(type='chair', whatever='upholstery', extra='more')
 
 
 @responses.activate
