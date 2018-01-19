@@ -16,10 +16,8 @@ class BodyType(Enum):
     FORM_ENCODED = 'data'
 
 
-QuerystringArgsType = Union[Tuple[str, bool], str]
-
-
 def _validate_arg_name(arg, arg_type, reserved):
+    # type: (str, str, Set[str]) -> str
     """
     Validate that `arg` does not conflict with names already defined in
     `reserved`.
@@ -43,6 +41,28 @@ def _validate_arg_name(arg, arg_type, reserved):
     return arg
 
 
+NO_DEFAULT = object()
+
+
+class Arg(object):
+    """
+    Querystring argument
+    """
+
+    def __init__(self, name, required=False, default=NO_DEFAULT):
+        # type: (str, bool, object) -> None
+        self.name = name
+        self.required = required
+        if required and default != NO_DEFAULT:
+            raise ValueError(
+                'If arg is `required=True` then `default` value is redundant, '
+                'as caller must always supply value. If you give a `default` '
+                'then `required=True` is not needed as arg will always be sent '
+                'with a value.'
+            )
+        self.default = default
+
+
 class APIEndpoint(object):
     """
     Params from url path (format string), querystring and request headers
@@ -62,9 +82,9 @@ class APIEndpoint(object):
                 'GET',
                 '/things/{user_id}/',  # url format string
                 querystring_args=(
-                    ('type', True),  # required arg
-                    'offset_id',
-                    'limit',
+                    Arg('type', required=True),
+                    Arg('offset_id'),
+                    Arg('limit', default=25),
                 ),
                 request_headers={
                     'Authorization': 'Bearer {access_token}'
@@ -133,13 +153,13 @@ class APIEndpoint(object):
 
     required_args = None  # type: Set[str]
     url_args = None  # type: Set[str]
-    querystring_args = None  # type: Set[str]
+    querystring_args = None  # type: Set[Arg]
     request_header_args = None  # type: Dict[str, Set[str]]
 
     def __init__(self,
                  method,  # type: str
                  path,  # type: str
-                 querystring_args=None,  # type: Optional[Tuple[QuerystringArgsType, ...]]
+                 querystring_args=None,  # type: Optional[Tuple[Arg, ...]]
                  request_headers=None,  # type: Optional[Dict[str, str]]
                  body_type=BodyType.JSON,  # type: BodyType
                  body_arg='body',  # type: str
@@ -193,15 +213,11 @@ class APIEndpoint(object):
         querystring_args_ = set()
         if querystring_args is not None:
             for arg in querystring_args:
-                if isinstance(arg, string_types):
-                    required = False
-                else:
-                    arg, required = arg
                 all_args.add(
-                    _validate_arg_name(arg, 'Querystring', reserved)
+                    _validate_arg_name(arg.name, 'Querystring', reserved)
                 )
-                if required:
-                    required_args.add(arg)
+                if arg.required:
+                    required_args.add(arg.name)
                 querystring_args_.add(arg)
 
         # parse request-header args

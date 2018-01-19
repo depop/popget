@@ -105,7 +105,7 @@ e.g.
 .. code:: python
 
     from popget import APIClient
-    from popget.endpoint import APIEndpoint
+    from popget.endpoint import APIEndpoint, Arg
 
     class ThingServiceClient(APIClient):
 
@@ -116,9 +116,9 @@ e.g.
             'GET',
             '/things/{user_id}/',  # url (format string)
             querystring_args=(
-                ('type', True),    # required arg
-                'offset_id',       # non-required args
-                'limit',
+                Arg('type', required=True),
+                Arg('offset_id'),
+                Arg('limit', default=25),
             ),
             request_headers={      # added to all requests
                 'Authorization': 'Bearer {access_token}'  # (format string)
@@ -206,8 +206,8 @@ versions of all endpoint methods.
             base_url = 'http://things.depop.com'
 
         get_things = GetEndpoint(
-            '/things/{user_id}/',  # url format string
-            (('type', True),),     # required querystring param (validated on call)
+            '/things/{user_id}/',           # url format string
+            (Arg('type', required=True),),  # required querystring param (validated on call)
         )
 
     # blocking:
@@ -236,8 +236,8 @@ You can customise the name of the generated async endpoint methods:
             async_method_template = '{}__async'
 
         get_things = GetEndpoint(
-            '/things/{user_id}/',  # url format string
-            (('type', True),),     # required querystring param (validated on call)
+            '/things/{user_id}/',           # url format string
+            (Arg('type', required=True),),  # required querystring param (validated on call)
         )
 
     future = ThingServiceClient.get_things__async(user_id=2345, type='cat')

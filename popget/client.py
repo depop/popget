@@ -7,7 +7,7 @@ import requests
 from requests.exceptions import Timeout
 
 from popget.conf import settings
-from popget.endpoint import APIEndpoint
+from popget.endpoint import APIEndpoint, Arg as QuerystringArg, NO_DEFAULT
 from popget.errors import MissingRequiredArg
 from popget.extratypes import ResponseTypes  # noqa
 from popget.utils import classproperty, get_base_attr, update_nested
@@ -55,10 +55,11 @@ def method_factory(endpoint, client_method_name):
         querystring_args = {}
         for arg in endpoint.querystring_args:
             try:
-                querystring_args[arg] = call_kwargs[arg]
+                querystring_args[arg.name] = call_kwargs[arg.name]
             except KeyError:
                 # non-required arg
-                continue
+                if arg.default != NO_DEFAULT:
+                    querystring_args[arg.name] = arg.default
 
         # prepare request-header args
         request_headers = {}
