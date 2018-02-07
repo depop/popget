@@ -447,3 +447,20 @@ def test_timeout():
 
     e = exc_info.value
     assert e.response.status_code == 504
+
+
+class CustomSession(requests.Session):
+    pass
+
+
+class CustomService(APIClient):
+    class Config:
+        base_url = 'http://baseurl.com/'
+        session_cls = CustomSession
+
+
+def test_custom_session_class():
+    """
+    Test that we can configure APIClient to use a custom session class.
+    """
+    assert isinstance(CustomService._config.session, CustomSession)
