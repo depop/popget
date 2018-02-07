@@ -140,7 +140,7 @@ class APIEndpoint(object):
         )
     """
 
-    RESERVED_NAMES = ('_request_kwargs',)
+    RESERVED_NAMES = ('_request_kwargs', '_session')
 
     method = None  # type: str
     path = None  # type: str
