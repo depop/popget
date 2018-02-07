@@ -1,5 +1,4 @@
 import string
-from six import string_types
 from typing import Any, Callable, Dict, Optional, Set, Tuple, Type, Union  # noqa
 
 from enum import Enum  # via enum34 package on python 2.7

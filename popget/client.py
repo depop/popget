@@ -7,14 +7,18 @@ import requests
 from requests.exceptions import Timeout
 
 from popget.conf import settings
-from popget.endpoint import APIEndpoint, Arg as QuerystringArg, NO_DEFAULT
+from popget.endpoint import APIEndpoint, NO_DEFAULT
 from popget.errors import MissingRequiredArg
 from popget.extratypes import ResponseTypes  # noqa
-from popget.utils import classproperty, get_base_attr, update_nested
+from popget.utils import get_base_attr, update_nested
 
 
 ClientMethod = Callable[
-    [Arg(Type['APIClient'], 'cls'), DefaultArg(Optional[Dict[Any, Any]], '_request_kwargs'), KwArg(object)],
+    [
+        Arg(Type['APIClient'], 'cls'),
+        DefaultArg(Optional[Dict[Any, Any]], '_request_kwargs'),
+        KwArg(object),
+    ],
     Union[ResponseTypes, object]
 ]
 
@@ -112,19 +116,21 @@ def method_factory(endpoint, client_method_name):
 class ConfigClass(object):
 
     base_url = None  # type: str
+    session_cls = None  # type: Type[requests.Session]
     _session = None  # type: requests.Session
 
     def __init__(self, config):
         self.base_url = getattr(config, 'base_url', '')
+        self.session_cls = getattr(config, 'session_cls', requests.Session)
 
-    @classproperty
-    def session(cls):
+    @property
+    def session(self):
         # type: () -> requests.Session
-        if not cls._session:
-            session = requests.Session()
+        if not self._session:
+            session = self.session_cls()
             session.headers['User-Agent'] = settings.CLIENT_DEFAULT_USER_AGENT
-            cls._session = session
-        return cls._session
+            self._session = session
+        return self._session
 
 
 class APIClientMetaclass(type):
