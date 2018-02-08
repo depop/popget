@@ -459,8 +459,30 @@ class CustomService(APIClient):
         session_cls = CustomSession
 
 
-def test_custom_session_class():
+def test_configure_custom_session_class():
     """
     Test that we can configure APIClient to use a custom session class.
     """
     assert isinstance(CustomService._config.session, CustomSession)
+
+
+def test_pass_custom_session_to_request():
+    """
+    Test that we can pass a custom session instance to the request method.
+    """
+    def callback(request):
+        assert 'x-chippendale' in request.headers
+        return (200, {}, '[{"thing": "Chippendale"}]')
+
+    responses.add_callback(responses.GET, 'http://baseurl.com/v1/thing/',
+                           callback=callback,
+                           content_type='application/json')
+
+    custom_session = CustomSession()
+    custom_session.headers.update({'x-chippendale': 'true'})
+    DummyService.thing_list(
+        type='chair',
+        whatever='upholstery',
+        extra='more',
+        _session=custom_session,
+    )

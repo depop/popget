@@ -59,7 +59,7 @@ eg
 
         get_things = GetEndpoint(
             '/things/{user_id}/',  # url format string
-            (('type', True),),     # required querystring param (validated on call)
+            Arg('type', required=True),  # required querystring param (validated on call)
         )
 
 Results in a client method you can call like:
@@ -104,16 +104,14 @@ e.g.
 
 .. code:: python
 
-    from popget import APIClient
-    from popget.endpoint import APIEndpoint, Arg
+    from popget import APIClient, Arg, GetEndpoint
 
     class ThingServiceClient(APIClient):
 
         class Config:
             base_url = 'http://things.depop.com'
 
-        get_things = APIEndpoint(
-            'GET',
+        get_things = GetEndpoint(
             '/things/{user_id}/',  # url (format string)
             querystring_args=(
                 Arg('type', required=True),
@@ -184,6 +182,29 @@ And for calls with a request body:
         }
     )
 
+You can also pass a custom ``requests.Session`` instance on a per-request basis using the ``_session`` kwarg:
+
+.. code:: python
+
+    from django.conf import settings
+    from requests_oauthlib import OAuth1Session
+
+    from myproject.twitter.client import TwitterClient
+
+    def tweet_from(user, message, **extra):
+        oauth_session = OAuth1Session(
+            settings.TWITTER_CONSUMER_KEY,
+            client_secret=settings.TWITTER_CONSUMER_SECRET,
+            resource_owner_key=user.tw_access_token,
+            resource_owner_secret=user.tw_access_token_secret,
+        )
+        body = {
+            'status': message,
+        }
+        body.update(extra)
+        return TwitterClient.update_status(body=body, _session=oauth_session)
+
+
 Asynchronous
 ~~~~~~~~~~~~
 
@@ -196,7 +217,7 @@ versions of all endpoint methods.
 
 .. code:: python
 
-    from popget import GetEndpoint
+    from popget import Arg, GetEndpoint
     from popget.async.threadpool import APIClient
     import requests
 
@@ -206,8 +227,10 @@ versions of all endpoint methods.
             base_url = 'http://things.depop.com'
 
         get_things = GetEndpoint(
-            '/things/{user_id}/',           # url format string
-            (Arg('type', required=True),),  # required querystring param (validated on call)
+            '/things/{user_id}/',            # url format string
+            querystring_args=(
+                Arg('type', required=True),  # required querystring param (validated on call)
+            ),
         )
 
     # blocking:
@@ -236,8 +259,10 @@ You can customise the name of the generated async endpoint methods:
             async_method_template = '{}__async'
 
         get_things = GetEndpoint(
-            '/things/{user_id}/',           # url format string
-            (Arg('type', required=True),),  # required querystring param (validated on call)
+            '/things/{user_id}/',            # url format string
+            querystring_args=(
+                Arg('type', required=True),  # required querystring param (validated on call)
+            ),
         )
 
     future = ThingServiceClient.get_things__async(user_id=2345, type='cat')
