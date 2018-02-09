@@ -246,6 +246,7 @@ class DummyService(APIClient):
             Arg('type', required=True),  # required
             Arg('whatever'),  # optional
             Arg('extra', default='stuff'),  # with default
+            Arg('format', default=lambda: 'yaml'),  # with callable default
         ],
     )
     thing_delete = APIEndpoint(
@@ -321,6 +322,7 @@ def test_get_with_querystring():
                 'type': ['chair'],
                 'whatever': ['upholstery'],
                 'extra': ['stuff'],  # arg default value filled
+                'format': ['yaml'],  # arg callable default value filled
             }
         return (200, {}, '[{"thing": "Chippendale"}]')
 
@@ -343,6 +345,7 @@ def test_get_with_querystring_send_default():
                 'type': ['chair'],
                 'whatever': ['upholstery'],
                 'extra': ['more'],  # arg default value overridden
+                'format': ['xml'],  # arg default value overridden
             }
         return (200, {}, '[{"thing": "Chippendale"}]')
 
@@ -350,7 +353,7 @@ def test_get_with_querystring_send_default():
                            callback=callback,
                            content_type='application/json')
 
-    DummyService.thing_list(type='chair', whatever='upholstery', extra='more')
+    DummyService.thing_list(type='chair', whatever='upholstery', extra='more', format='xml')
 
 
 @responses.activate
