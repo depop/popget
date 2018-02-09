@@ -64,7 +64,8 @@ def method_factory(endpoint, client_method_name):
             except KeyError:
                 # non-required arg
                 if arg.default != NO_DEFAULT:
-                    querystring_args[arg.name] = arg.default
+                    default = arg.default() if callable(arg.default) else arg.default
+                    querystring_args[arg.name] = default
 
         # prepare request-header args
         request_headers = {}

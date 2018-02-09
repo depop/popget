@@ -49,7 +49,7 @@ class Arg(object):
     """
 
     def __init__(self, name, required=False, default=NO_DEFAULT):
-        # type: (str, bool, object) -> None
+        # type: (str, bool, Union[object, Callable]) -> None
         self.name = name
         self.required = required
         if required and default != NO_DEFAULT:

@@ -135,6 +135,34 @@ This will give you a client with a ``get_things`` method you can call like:
         access_token='87a64c98b62d39e8625f',
     )
 
+Querystring args can have a callable as the default value, e.g.:
+
+.. code:: python
+
+    from datetime import datetime
+    from popget import APIClient, Arg, GetEndpoint
+
+    def now():
+        return datetime.now().isoformat()
+
+    class ThingServiceClient(APIClient):
+
+        class Config:
+            base_url = 'http://things.depop.com'
+
+        get_things = GetEndpoint(
+            '/things/{user_id}/',  # url (format string)
+            querystring_args=(
+                Arg('since', default=now),
+            ),
+            request_headers={      # added to all requests
+                'Authorization': 'Bearer {access_token}'  # (format string)
+            }
+        )
+
+    response_data = ThingServiceClient.get_things(user_id=123)
+    # GET http://things.depop.com/things/123/?since=2018-02-09T13:31:10.569481
+
 You can still pass extra args down into the ``requests`` lib on a per-call
 basis by using ``_request_kwargs``:
 
