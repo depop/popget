@@ -10,6 +10,7 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
+# Get content from __about__.py
 about = {}
 with open(path.join(here, 'popget', '__about__.py'), 'r', 'utf-8') as f:
     exec(f.read(), about)
