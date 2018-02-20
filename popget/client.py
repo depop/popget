@@ -114,7 +114,8 @@ def method_factory(endpoint, client_method_name):
             _request_kwargs=_request_kwargs,
             **call_kwargs
         )
-        return getattr(cls, client_method_name)(endpoint.method, url, **request_kwargs)
+        client_method = getattr(cls, client_method_name)
+        return client_method(endpoint.method, url, session=_session, **request_kwargs)
 
     return client_method
 
