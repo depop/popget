@@ -10,9 +10,19 @@ from popget.extratypes import ResponseTypes  # noqa
 class BodyType(Enum):
     """
     `body_type` of requests which send a body
+
+    NOTE:
+    these enum values correspond to appropriate arg to request method
+    e.g. requests.get(data={...})
     """
     JSON = 'json'
     FORM_ENCODED = 'data'
+
+
+BODY_CONTENT_TYPES = {
+    BodyType.JSON: 'application/json',
+    BodyType.FORM_ENCODED: 'application/x-www-form-urlencoded',
+}
 
 
 def _validate_arg_name(arg, arg_type, reserved):

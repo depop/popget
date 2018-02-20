@@ -7,7 +7,7 @@ import requests
 from requests.exceptions import Timeout
 
 from popget.conf import settings
-from popget.endpoint import APIEndpoint, NO_DEFAULT
+from popget.endpoint import APIEndpoint, BodyType, BODY_CONTENT_TYPES, NO_DEFAULT
 from popget.errors import MissingRequiredArg
 from popget.extratypes import ResponseTypes  # noqa
 from popget.utils import get_base_attr, update_nested
@@ -68,13 +68,17 @@ def method_factory(endpoint, client_method_name):
                     querystring_args[arg.name] = default
 
         # prepare request-header args
-        request_headers = {}
+        request_headers = {
+            'Content-Type': BODY_CONTENT_TYPES[BodyType(endpoint.body_type)],
+        }
+        if endpoint.request_headers:
+            request_headers.update(endpoint.request_headers)
         for header, args in endpoint.request_header_args.items():
             header_kwargs = {
                 arg: call_kwargs[arg]
                 for arg in args
             }
-            request_headers[header] = endpoint.request_headers[header].format(**header_kwargs)
+            request_headers[header] = request_headers[header].format(**header_kwargs)
 
         url_template = '{base_url}/{path}'.format(
             base_url=base_url.rstrip('/'),

@@ -195,10 +195,9 @@ And for calls with a request body:
         new_thing = PostEndpoint(
             '/things/',
             body_required=True,
-            body_type=BodyType.FORM_ENCODED,
+            body_type=BodyType.FORM_ENCODED,  # or BodyType.JSON - sets content-type header
             request_headers={
                 'Authorization': 'Bearer {access_token}',
-                'Content-Type': 'application/json; charset=utf-8'
             }
         )
 
