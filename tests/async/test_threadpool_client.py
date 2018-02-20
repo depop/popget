@@ -3,7 +3,7 @@ import requests
 import responses
 
 from popget.async.threadpool import APIClient
-from popget.endpoint import APIEndpoint, BodyType
+from popget.endpoint import APIEndpoint
 
 
 class DummyService(APIClient):

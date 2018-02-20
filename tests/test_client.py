@@ -221,7 +221,7 @@ def test_request_header_args_clash():
 class DummyService(APIClient):
 
     class Config:
-        base_url = 'http://baseurl.com/'
+        base_url = 'http://example.com/'
 
     thing_detail = APIEndpoint(
         'GET',
@@ -263,7 +263,7 @@ def test_raise_for_status():
     """
     Test that we raise a `requests.HTTPError` for 40x/50x response status
     """
-    responses.add(responses.GET, 'http://baseurl.com/v1/thing/777',
+    responses.add(responses.GET, 'http://example.com/v1/thing/777',
                   body='{"error": "Not found."}', status=404,
                   content_type='application/json')
 
@@ -276,11 +276,12 @@ def test_get_detail():
     """
     Get request with url arg. Response with json content-type is deserialized.
     """
-    responses.add(responses.GET, 'http://baseurl.com/v1/thing/777',
+    responses.add(responses.GET, 'http://example.com/v1/thing/777',
                   body='{"thing": "it\'s a thing"}', status=200,
                   content_type='application/json')
 
     data = DummyService.thing_detail(id=777)
+    assert len(responses.calls) == 1
     assert data == {"thing": "it's a thing"}
 
 
@@ -289,11 +290,12 @@ def test_non_json_response():
     """
     If response does not have a json content-type then don't try to deserialize it.
     """
-    responses.add(responses.GET, 'http://baseurl.com/v1/thing/777',
+    responses.add(responses.GET, 'http://example.com/v1/thing/777',
                   body="It's your thing, do what you want to do.", status=200,
                   content_type='text/html')
 
     data = DummyService.thing_detail(id=777)
+    assert len(responses.calls) == 1
     assert data == "It's your thing, do what you want to do."
 
 
@@ -302,7 +304,7 @@ def test_get_missing_url_arg():
     """
     Url args are required, missing arg raises an exception
     """
-    responses.add(responses.GET, 'http://baseurl.com/v1/thing/777',
+    responses.add(responses.GET, 'http://example.com/v1/thing/777',
                   body='{"thing": "it\'s a thing"}', status=200,
                   content_type='application/json')
 
@@ -326,11 +328,12 @@ def test_get_with_querystring():
             }
         return (200, {}, '[{"thing": "Chippendale"}]')
 
-    responses.add_callback(responses.GET, 'http://baseurl.com/v1/thing/',
+    responses.add_callback(responses.GET, 'http://example.com/v1/thing/',
                            callback=callback,
                            content_type='application/json')
 
     DummyService.thing_list(type='chair', whatever='upholstery')
+    assert len(responses.calls) == 1
 
 
 @responses.activate
@@ -349,11 +352,12 @@ def test_get_with_querystring_send_default():
             }
         return (200, {}, '[{"thing": "Chippendale"}]')
 
-    responses.add_callback(responses.GET, 'http://baseurl.com/v1/thing/',
+    responses.add_callback(responses.GET, 'http://example.com/v1/thing/',
                            callback=callback,
                            content_type='application/json')
 
     DummyService.thing_list(type='chair', whatever='upholstery', extra='more', format='xml')
+    assert len(responses.calls) == 1
 
 
 @responses.activate
@@ -362,7 +366,7 @@ def test_get_missing_querystring_arg():
     Request with querystring args. Missing arg required raises an exception,
     missing optional arg is ignored.
     """
-    responses.add(responses.GET, 'http://baseurl.com/v1/thing/',
+    responses.add(responses.GET, 'http://example.com/v1/thing/',
                   body='[{"thing": "Chippendale"}]', status=200,
                   content_type='application/json')
 
@@ -372,6 +376,7 @@ def test_get_missing_querystring_arg():
 
     # missing optional arg
     DummyService.thing_list(type='chair')
+    assert len(responses.calls) == 1
 
 
 @responses.activate
@@ -387,7 +392,7 @@ def test_post_json():
         assert request.headers['Authorization'] == 'Bearer of gratitude'
         return (200, {}, 'Do what you want to do.')
 
-    responses.add_callback(responses.POST, 'http://baseurl.com/v1/thing/',
+    responses.add_callback(responses.POST, 'http://example.com/v1/thing/',
                            callback=callback,
                            content_type='text/plain')
 
@@ -395,6 +400,7 @@ def test_post_json():
         body={"thing": "it's my thing"},
         token='of gratitude'
     )
+    assert len(responses.calls) == 1
 
 
 @responses.activate
@@ -408,7 +414,7 @@ def test_patch_form_encoded():
         assert 'type=coffee+table' in request.body
         return (200, {}, 'OK')
 
-    responses.add_callback(responses.PATCH, 'http://baseurl.com/v1/thing/777',
+    responses.add_callback(responses.PATCH, 'http://example.com/v1/thing/777',
                            callback=callback,
                            content_type='text/plain')
 
@@ -419,6 +425,7 @@ def test_patch_form_encoded():
             "type": "coffee table",
         },
     )
+    assert len(responses.calls) == 1
 
 
 @responses.activate
@@ -433,11 +440,12 @@ def test_delete_arg_sharing():
         assert request.headers['X-Depop-Thing'] == '777'
         return (200, {}, 'OK')
 
-    responses.add_callback(responses.DELETE, 'http://baseurl.com/v1/thing/777',
+    responses.add_callback(responses.DELETE, 'http://example.com/v1/thing/777',
                            callback=callback,
                            content_type='text/plain')
 
     DummyService.thing_delete(thing_id=777)
+    assert len(responses.calls) == 1
 
 
 @override_settings(settings, CLIENT_TIMEOUT=0.0001)
@@ -458,7 +466,7 @@ class CustomSession(requests.Session):
 
 class CustomService(APIClient):
     class Config:
-        base_url = 'http://baseurl.com/'
+        base_url = 'http://example.com/'
         session_cls = CustomSession
 
 
@@ -469,6 +477,7 @@ def test_configure_custom_session_class():
     assert isinstance(CustomService._config.session, CustomSession)
 
 
+@responses.activate
 def test_pass_custom_session_to_request():
     """
     Test that we can pass a custom session instance to the request method.
@@ -477,7 +486,7 @@ def test_pass_custom_session_to_request():
         assert 'x-chippendale' in request.headers
         return (200, {}, '[{"thing": "Chippendale"}]')
 
-    responses.add_callback(responses.GET, 'http://baseurl.com/v1/thing/',
+    responses.add_callback(responses.GET, 'http://example.com/v1/thing/',
                            callback=callback,
                            content_type='application/json')
 
@@ -489,3 +498,4 @@ def test_pass_custom_session_to_request():
         extra='more',
         _session=custom_session,
     )
+    assert len(responses.calls) == 1
