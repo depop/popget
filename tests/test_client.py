@@ -235,8 +235,19 @@ class DummyService(APIClient):
     thing_create = APIEndpoint(
         'POST',
         '/v1/thing/',
+        # BodyType.JSON (default)
         request_headers={
-            'Authorization': 'Bearer {token}'
+            'Authorization': 'Bearer {token}',
+            'X-Depop-Pointless': 'why bother?',
+        }
+    )
+    thing_like = APIEndpoint(
+        'PUT',
+        '/v1/thing/like/',
+        # BodyType.JSON (default)
+        request_headers={
+            'Authorization': 'Bearer {token}',
+            'Content-Type': 'application/vnd.depop.v1+json',
         }
     )
     thing_list = APIEndpoint(
@@ -253,7 +264,7 @@ class DummyService(APIClient):
         'DELETE',
         '/v1/thing/{thing_id}',
         request_headers={
-            'X-Depop-Thing': '{thing_id}'
+            'X-Depop-Thing': '{thing_id}',
         }
     )
 
@@ -387,9 +398,15 @@ def test_post_json():
     def callback(request):
         # expected post body was passed:
         assert request.body == b'{"thing": "it\'s my thing"}'
-        # expected header was present:
+
+        # expected headers were present:
+        assert 'Content-Type' in request.headers
+        assert request.headers['Content-Type'] == 'application/json'  # from BodyType
         assert 'Authorization' in request.headers
-        assert request.headers['Authorization'] == 'Bearer of gratitude'
+        assert request.headers['Authorization'] == 'Bearer of gratitude'  # arg substituted
+        assert 'X-Depop-Pointless' in request.headers
+        assert request.headers['X-Depop-Pointless'] == 'why bother?'  # no arg
+
         return (200, {}, 'Do what you want to do.')
 
     responses.add_callback(responses.POST, 'http://example.com/v1/thing/',
@@ -412,6 +429,11 @@ def test_patch_form_encoded():
         # expected post body was passed:
         assert 'description=a+whole+other+thing' in request.body
         assert 'type=coffee+table' in request.body
+
+        # expected headers were present:
+        assert 'Content-Type' in request.headers
+        assert request.headers['Content-Type'] == 'application/x-www-form-urlencoded'
+
         return (200, {}, 'OK')
 
     responses.add_callback(responses.PATCH, 'http://example.com/v1/thing/777',
@@ -424,6 +446,36 @@ def test_patch_form_encoded():
             "description": "a whole other thing",
             "type": "coffee table",
         },
+    )
+    assert len(responses.calls) == 1
+
+
+@responses.activate
+def test_put_json_custom_content_type():
+    """
+    Put request with a JSON post body and a request-header arg with custom
+    content type (overriding the 'application/json' that would be set
+    automatically due to BodyType.JSON)
+    """
+    def callback(request):
+        # expected post body was passed:
+        assert request.body == b'{"user_id": 123}'
+
+        # expected headers were present:
+        assert 'Content-Type' in request.headers
+        assert request.headers['Content-Type'] == 'application/vnd.depop.v1+json'
+        assert 'Authorization' in request.headers
+        assert request.headers['Authorization'] == 'Bearer of gratitude'
+
+        return (200, {}, 'Do what you want to do.')
+
+    responses.add_callback(responses.PUT, 'http://example.com/v1/thing/like/',
+                           callback=callback,
+                           content_type='text/plain')
+
+    DummyService.thing_like(
+        body={"user_id": 123},
+        token='of gratitude'
     )
     assert len(responses.calls) == 1
 
@@ -448,7 +500,7 @@ def test_delete_arg_sharing():
     assert len(responses.calls) == 1
 
 
-@override_settings(settings, CLIENT_TIMEOUT=0.0001)
+@override_settings(settings, CLIENT_TIMEOUT=0.000001)
 def test_timeout():
     """
     Test APIClient behaviour when the requests library timeout threshold is reached
