@@ -18,7 +18,7 @@ Configuration
 ~~~~~~~~~~~~~
 
 Settings are intended to be configured primarily via a python file, such
-as your existing Django ``settings.py`` or Celery ``celeryconfig.py``.
+as your existing Django ``settings.py``.
 To bootstrap this, there are a couple of env vars to control how config
 is loaded:
 
@@ -34,9 +34,9 @@ See source of ``popget/conf/defaults.py`` for more details.
 Some useful config keys (all of which are prefixed with
 ``POPGET_`` by default):
 
--  ``CLIENT_DEFAULT_USER_AGENT`` when making requests, popget will use this
+-  ``<namespace>_CLIENT_DEFAULT_USER_AGENT`` when making requests, popget will use this
    string as the user agent.
--  ``CLIENT_TIMEOUT`` if ``None`` then no timeout, otherwise this timeout
+-  ``<namespace>_CLIENT_TIMEOUT`` if ``None`` then no timeout, otherwise this timeout
    (in seconds) will be applied to all requests. Requests which timeout will
    return a 504 response, which will be raised as an ``HTTPError``.
 
