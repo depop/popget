@@ -1,7 +1,7 @@
 .PHONY: pypi, tag
 
 pypi:
-	rm dist/*
+	rm -f dist/*
 	python setup.py sdist
 	twine upload --config-file=.pypirc dist/*
 	make tag
