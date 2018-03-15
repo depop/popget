@@ -1,7 +1,11 @@
 popget
 ======
 
-|Build Status|
+|PyPI Version| |Build Status|
+
+.. |PyPI Version| image:: http://img.shields.io/pypi/v/popget.svg?style=flat
+   :target: https://pypi.python.org/pypi/popget/
+   :alt: Latest PyPI version
 
 .. |Build Status| image:: https://circleci.com/gh/depop/popget.svg?style=shield&circle-token=66ab09119c495365d662fe170e5efcc4467e3b37
     :alt: Build Status
@@ -235,7 +239,8 @@ You can also pass a custom ``requests.Session`` instance on a per-request basis 
 Asynchronous
 ~~~~~~~~~~~~
 
-Optional support for asynchronous requests is provided, via a ``requests-futures`` backend.
+Optional support for asynchronous requests is provided, via a
+`requests-futures <https://pypi.python.org/pypi/requests-futures>`_ backend.
 
 ``pip install popget[threadpool]``
 

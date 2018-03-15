@@ -1,4 +1,4 @@
-.PHONY: pypi, tag
+.PHONY: pypi, tag, test
 
 pypi:
 	rm -f dist/*
@@ -9,3 +9,6 @@ pypi:
 tag:
 	git tag $$(python -c "from popget.__about__ import __version__; print __version__")
 	git push --tags
+
+test:
+	py.test -v -s --ipdb tests/
