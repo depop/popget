@@ -18,6 +18,11 @@ microservices environment.
 Usage
 -----
 
+.. code:: bash
+
+    pip install popget
+
+
 Configuration
 ~~~~~~~~~~~~~
 
