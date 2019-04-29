@@ -59,7 +59,7 @@ eg
 
 .. code:: python
 
-    from popget import APIClient, GetEndpoint
+    from popget import APIClient, Arg, GetEndpoint
 
     class ThingServiceClient(APIClient):
 
