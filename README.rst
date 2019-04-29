@@ -68,7 +68,9 @@ eg
 
         get_things = GetEndpoint(
             '/things/{user_id}/',  # url format string
-            Arg('type', required=True),  # required querystring param (validated on call)
+            querystring_args=(
+                Arg('type', required=True),  # required querystring param (validated on call)
+            )
         )
 
 Results in a client method you can call like:
