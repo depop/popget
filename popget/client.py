@@ -37,7 +37,7 @@ def method_factory(endpoint, client_method_name):
         deserialized JSON data.
     """
     def _prepare_request(base_url, _request_kwargs=None, **call_kwargs):
-        # type: (str, Optional[Dict], **object) -> Tuple[str, Dict[str, object]]
+        # type: (str, Optional[Dict], **Any) -> Tuple[str, Dict[str, Dict]]
         """
         Kwargs:
             base_url: base url of API
@@ -68,9 +68,7 @@ def method_factory(endpoint, client_method_name):
                     querystring_args[arg.name] = default
 
         # prepare request-header args
-        request_headers = {
-            'Content-Type': BODY_CONTENT_TYPES[BodyType(endpoint.body_type)],
-        }
+        request_headers = {}
         if endpoint.request_headers:
             request_headers.update(endpoint.request_headers)
         for header, args in endpoint.request_header_args.items():
@@ -94,6 +92,8 @@ def method_factory(endpoint, client_method_name):
         request_body = call_kwargs.get(endpoint.body_arg)
         if request_body is not None:
             request_kwargs[endpoint.body_type] = request_body
+            if 'Content-Type' not in request_kwargs['headers']:
+                request_kwargs['headers']['Content-type'] = BODY_CONTENT_TYPES[BodyType(endpoint.body_type)]
 
         if _request_kwargs is not None:
             update_nested(request_kwargs, _request_kwargs)

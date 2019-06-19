@@ -287,9 +287,13 @@ def test_get_detail():
     """
     Get request with url arg. Response with json content-type is deserialized.
     """
-    responses.add(responses.GET, 'http://example.com/v1/thing/777',
-                  body='{"thing": "it\'s a thing"}', status=200,
-                  content_type='application/json')
+    def callback(request):
+        assert 'Content-Type' not in request.headers
+        return (200, {}, '{"thing": "it\'s a thing"}')
+
+    responses.add_callback(responses.GET, 'http://example.com/v1/thing/777',
+                           callback=callback,
+                           content_type='application/json')
 
     data = DummyService.thing_detail(id=777)
     assert len(responses.calls) == 1
