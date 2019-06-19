@@ -37,7 +37,7 @@ def method_factory(endpoint, client_method_name):
         deserialized JSON data.
     """
     def _prepare_request(base_url, _request_kwargs=None, **call_kwargs):
-        # type: (str, Optional[Dict], **object) -> Tuple[str, Dict[str, object]]
+        # type: (str, Optional[Dict], **Any) -> Tuple[str, Dict[str, Dict]]
         """
         Kwargs:
             base_url: base url of API
