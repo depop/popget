@@ -57,7 +57,7 @@ setup(
 
     packages=[
         'popget',
-        'popget.async',
+        'popget.nonblocking',
         'popget.conf',
     ],
 )

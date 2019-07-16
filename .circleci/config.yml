@@ -26,20 +26,20 @@ jobs:
           path: /tmp/results
           destination: python-2.7
 
-  "python-3.6":
+  "python-3.7":
     docker:
-      - image: circleci/python:3.6
+      - image: circleci/python:3.7
     steps:
       - checkout
       - restore_cache:
-          key: py36-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "requirements-test.txt" }}
+          key: py37-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "requirements-test.txt" }}
       - run:
           command: |
             python -m venv venv
             . venv/bin/activate
             pip install -r requirements-test.txt
       - save_cache:
-          key: py36-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "requirements-test.txt" }}
+          key: py37-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "requirements-test.txt" }}
           paths:
             - "venv"
       - run:
@@ -50,11 +50,11 @@ jobs:
             py.test -v -s --junitxml=/tmp/results/pytest.xml tests/
       - store_artifacts:
           path: /tmp/results
-          destination: python-3.6
+          destination: python-3.7
 
 workflows:
   version: 2
   build:
     jobs:
       - "python-2.7"
-      - "python-3.6"
+      - "python-3.7"
