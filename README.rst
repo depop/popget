@@ -314,7 +314,7 @@ This project is tested against:
 
 =========== ===
 Python 2.7   * 
-Python 3.6   * 
+Python 3.7   * 
 =========== ===
 
 Running the tests
@@ -337,7 +337,7 @@ the two Python version jobs separately:
 
 .. code:: bash
 
-    circleci build --job python-3.6
+    circleci build --job python-3.7
 
 py.test (single python version)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -349,6 +349,6 @@ Decide which Python version you want to test and create a virtualenv:
 
 .. code:: bash
 
-    pyenv virtualenv 3.6.3 popget
+    pyenv virtualenv 3.7.4 popget
     pip install -r requirements-test.txt
     py.test -v -s --ipdb tests/

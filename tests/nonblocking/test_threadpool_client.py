@@ -2,7 +2,7 @@ import pytest
 import requests
 import responses
 
-from popget.async.threadpool import APIClient
+from popget.nonblocking.threadpool import APIClient
 from popget.endpoint import APIEndpoint
 
 
