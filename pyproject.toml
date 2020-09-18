@@ -1,0 +1,34 @@
+[tool.poetry]
+name = "popget"
+version = "1.9.0"
+description = "A simple no-bells-and-whistles REST-API client, optionally supporting async requests."
+authors = ["Depop <dev@depop.com>"]
+license = "Apache-2.0"
+homepage = "https://github.com/depop/popget"
+repository = "https://github.com/depop/popget"
+
+[tool.poetry.dependencies]
+python = "^3.6 || ^2.7"
+flexisettings = "^1.0"
+requests = "^2.0"
+typing = { version = "^3.6", python = "^2.7" }
+six = "^1.15"
+enum34 = { version = "^1.1.6", python = "^2.7" }
+futures = { version = "^3.1.1", python = "^2.7" }
+mypy_extensions = "^0.4"
+requests-futures = { version = "^0.9.7", optional = true }
+
+[tool.poetry.dev-dependencies]
+mypy = { version = "^0.782", python = "^3.6" }
+pytest = [
+	{ version = "^6", python = "^3.6" },
+	{ version = "^4.6", python = "^2.7" }
+]
+responses = "^0.12.0"
+
+[tool.poetry.extras]
+threadpool = ["requests-futures"]
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

@@ -1,5 +1,0 @@
--r requirements.txt
-
-pytest
-mypy; python_version >= '3.4'
-responses

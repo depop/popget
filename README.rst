@@ -315,6 +315,7 @@ This project is tested against:
 =========== ===
 Python 2.7   * 
 Python 3.7   * 
+Python 3.8   * 
 =========== ===
 
 Running the tests
@@ -349,6 +350,6 @@ Decide which Python version you want to test and create a virtualenv:
 
 .. code:: bash
 
-    pyenv virtualenv 3.7.4 popget
+    pyenv virtualenv 3.8.5 popget
     pip install -r requirements-test.txt
     py.test -v -s --ipdb tests/

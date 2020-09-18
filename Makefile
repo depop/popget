@@ -1,13 +1,11 @@
 .PHONY: pypi tag mypy pytest test
 
 pypi:
-	rm -f dist/*
-	python setup.py sdist
-	twine upload --config-file=.pypirc dist/*
+	poetry publish --build
 	make tag
 
 tag:
-	git tag $$(python -c "from popget.__about__ import __version__; print(__version__)")
+	git tag $$(poetry version --no-ansi | tr " " "\n" | tail -n 1)
 	git push --tags
 
 mypy:
@@ -19,4 +17,3 @@ pytest:
 test:
 	$(MAKE) mypy
 	$(MAKE) pytest
-
