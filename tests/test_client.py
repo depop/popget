@@ -1,6 +1,7 @@
 from six.moves.urllib import parse as urlparse
 
 from flexisettings.utils import override_settings
+from urllib3.exceptions import ConnectTimeoutError
 import pytest
 import requests
 import responses
@@ -504,13 +505,20 @@ def test_delete_arg_sharing():
     assert len(responses.calls) == 1
 
 
-@override_settings(settings, CLIENT_TIMEOUT=0.000001)
+class TimeoutService(DummyService):
+
+    class Config:
+        # (psf/requests uses this for its timeout test)
+        base_url = 'http://10.255.255.1/'
+
+
+@override_settings(settings, CLIENT_TIMEOUT=1)
 def test_timeout():
     """
     Test APIClient behaviour when the requests library timeout threshold is reached
     """
     with pytest.raises(requests.exceptions.HTTPError) as exc_info:
-        DummyService.thing_detail(id=777)
+        TimeoutService.thing_detail(id=777)
 
     e = exc_info.value
     assert e.response.status_code == 504
