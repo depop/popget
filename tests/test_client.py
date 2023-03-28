@@ -521,7 +521,7 @@ def test_timeout():
     """
     with (
         pytest.raises(requests.exceptions.HTTPError) as exc_info,
-        patch('popget.client.settings.CLIENT_TIMEOUT', 1)
+        patch('popget.client.settings.CLIENT_TIMEOUT', 1.0)
     ):
         TimeoutService.thing_detail(id=777)
 

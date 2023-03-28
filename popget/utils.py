@@ -3,8 +3,7 @@ from types import MappingProxyType
 from typing import Any
 
 
-def update_nested(d, u):
-    # type: (dict, collections.abc.Mapping) -> dict
+def update_nested(d: dict, u: collections.abc.Mapping) -> dict:
     """
     https://stackoverflow.com/a/3233356/202168
     A dict update that supports nested keys without overwriting the whole
@@ -35,8 +34,7 @@ def update_nested(d, u):
     return d
 
 
-def get_base_attr(attr, bases, attrs):
-    # type: (str, tuple[type, ...], dict[str, Any] | MappingProxyType) -> object | None
+def get_base_attr(attr: str, bases: tuple[type, ...], attrs: dict[str, Any] | MappingProxyType) -> object | None:
     """
     Given an attr name, recursively look through the given base classes
     until finding one where that attr is present, returning the value.

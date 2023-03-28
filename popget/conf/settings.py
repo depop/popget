@@ -5,10 +5,10 @@ try:
 except ImportError:
     settings = None
 
-CLIENT_DEFAULT_USER_AGENT = getattr(
+CLIENT_DEFAULT_USER_AGENT: str = getattr(
     settings, 'POPGET_CLIENT_DEFAULT_USER_AGENT', 'popget/{}'.format(__version__)
 )
 
-CLIENT_TIMEOUT = getattr(settings, 'POPGET_CLIENT_TIMEOUT', None)  # type: float | None
+CLIENT_TIMEOUT: float = getattr(settings, 'POPGET_CLIENT_TIMEOUT', 3.0)
 
-CLIENT_DISABLE_VERIFY_SSL = getattr(settings, 'POPGET_CLIENT_DISABLE_VERIFY_SSL', False)
+CLIENT_DISABLE_VERIFY_SSL: bool = getattr(settings, 'POPGET_CLIENT_DISABLE_VERIFY_SSL', False)
