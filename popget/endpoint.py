@@ -1,10 +1,9 @@
 import string
-from typing import Any, Callable, Dict, Optional, Set, Tuple, Type, Union  # noqa
+from typing import Any, Callable, Type
 
 from enum import Enum  # via enum34 package on python 2.7
 
 from popget.errors import ArgNameConflict
-from popget.extratypes import ResponseTypes  # noqa
 
 
 class BodyType(Enum):
@@ -26,7 +25,7 @@ BODY_CONTENT_TYPES = {
 
 
 def _validate_arg_name(arg, arg_type, reserved):
-    # type: (str, str, Set[str]) -> str
+    # type: (str, str, set[str]) -> str
     """
     Validate that `arg` does not conflict with names already defined in
     `reserved`.
@@ -59,7 +58,7 @@ class Arg(object):
     """
 
     def __init__(self, name, required=False, default=NO_DEFAULT):
-        # type: (str, bool, Union[object, Callable]) -> None
+        # type: (str, bool, object | Callable) -> None
         self.name = name
         self.required = required
         if required and default != NO_DEFAULT:
@@ -158,18 +157,18 @@ class APIEndpoint(object):
     body_type = None  # type: str
     body_arg = None  # type: str
 
-    request_headers = None  # type: Optional[Dict[str, str]]
+    request_headers = None  # type: dict[str, str] | None
 
-    required_args = None  # type: Set[str]
-    url_args = None  # type: Set[str]
-    querystring_args = None  # type: Set[Arg]
-    request_header_args = None  # type: Dict[str, Set[str]]
+    required_args = None  # type: set[str]
+    url_args = None  # type: set[str]
+    querystring_args = None  # type: set[Arg]
+    request_header_args = None  # type: dict[str, set[str]]
 
     def __init__(self,
                  method,  # type: str
                  path,  # type: str
-                 querystring_args=None,  # type: Optional[Tuple[Arg, ...]]
-                 request_headers=None,  # type: Optional[Dict[str, str]]
+                 querystring_args=None,  # type: tuple[Arg, ...] | None
+                 request_headers=None,  # type: dict[str, str] | None
                  body_type=BodyType.JSON,  # type: BodyType
                  body_arg='body',  # type: str
                  body_required=False,  # type: bool
@@ -230,7 +229,7 @@ class APIEndpoint(object):
                 querystring_args_.add(arg)
 
         # parse request-header args
-        request_header_args = {}  # type: Dict[str, Set[str]]
+        request_header_args = {}  # type: dict[str, set[str]]
         if request_headers is not None:
             for header, value in request_headers.items():
                 for tokens in f.parse(value):
