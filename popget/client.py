@@ -2,7 +2,6 @@ from functools import partial
 from six import add_metaclass
 from typing import Any, Callable, Type
 
-from mypy_extensions import Arg, DefaultArg, KwArg
 import requests
 from requests.exceptions import Timeout
 
@@ -13,18 +12,7 @@ from popget.extratypes import ResponseTypes
 from popget.utils import get_base_attr, update_nested
 
 
-ClientMethod = Callable[
-    [
-        Arg(Type['APIClient'], 'cls'),
-        DefaultArg(dict[Any, Any] | None, '_request_kwargs'),
-        DefaultArg(requests.Session | None, '_session'),
-        KwArg(object),
-    ],
-    ResponseTypes | object
-]
-
-
-def method_factory(endpoint: APIEndpoint, client_method_name: str) -> ClientMethod:
+def method_factory(endpoint: APIEndpoint, client_method_name: str):
     """
     Kwargs:
         endpoint: the endpoint to generate a callable method for

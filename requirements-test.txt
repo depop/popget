@@ -3,6 +3,5 @@
 pytest
 responses
 mypy
-mypy_extensions
 types-requests
 types-six
