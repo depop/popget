@@ -44,16 +44,12 @@ setup(
         'Programming Language :: Python :: 3.11',
     ],
     install_requires=[
-        'requests',
-        'typing',
-        'six',
-        'enum34',
-        'futures',
-        'mypy_extensions',
+        'requests<3.0.0',
+        'six<2.0.0',
+        'enum34<2.0.0',
+        'futures<4.0.0',
+        'requests-futures>=0.9.7,<1.0.0',
     ],
-    extras_require={
-        'threadpool':  ['requests-futures>=0.9.7,<1.0.0'],
-    },
 
     packages=[
         'popget',
