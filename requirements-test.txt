@@ -1,5 +1,7 @@
 -r requirements.txt
 
 pytest
-mypy==0.782; python_version >= '3.4'
 responses
+mypy
+types-requests
+types-six
