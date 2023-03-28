@@ -313,31 +313,11 @@ Compatibility
 This project is tested against:
 
 =========== ===
-Python 2.7   * 
-Python 3.7   * 
+Python 3.11   *
 =========== ===
 
 Running the tests
 -----------------
-
-CircleCI
-~~~~~~~~
-
-| The easiest way to test the full version matrix is to install the
-  CircleCI command line app:
-| https://circleci.com/docs/2.0/local-jobs/
-| (requires Docker)
-
-The cli does not support 'workflows' at the moment so you have to run
-the two Python version jobs separately:
-
-.. code:: bash
-
-    circleci build --job python-2.7
-
-.. code:: bash
-
-    circleci build --job python-3.7
 
 py.test (single python version)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -349,6 +329,6 @@ Decide which Python version you want to test and create a virtualenv:
 
 .. code:: bash
 
-    pyenv virtualenv 3.7.4 popget
+    python -m virtualenv .venv -p python3.11
     pip install -r requirements-test.txt
-    py.test -v -s --ipdb tests/
+    py.test -v -s tests/
