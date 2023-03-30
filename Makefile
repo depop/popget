@@ -11,13 +11,10 @@ tag:
 	git push --tags
 
 mypy:
-	mypy --py2 --ignore-missing-imports popget
+	mypy --ignore-missing-imports popget
 
 pytest:
 	py.test -v -s tests/
-
-pytest-pdb:
-	py.test -v -s --ipdb tests/
 
 test:
 	$(MAKE) mypy

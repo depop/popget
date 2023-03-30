@@ -41,19 +41,15 @@ setup(
         'Programming Language :: Python',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.11',
     ],
     install_requires=[
-        'flexisettings>=1.0,<1.1',
-        'requests>2.0,<3.0',
-        'typing>=3.6.2,<4.0; python_version < "3.6"',
-        'six',
-        'enum34>=1.1.6,<2.0.0; python_version < "3.4"',
-        'futures>=3.1.1,<3.2.0; python_version < "3.2"',
-        'mypy_extensions>=0.3,<0.5',
+        'requests<3.0.0',
+        'six<2.0.0',
+        'enum34<2.0.0',
+        'futures<4.0.0',
+        'requests-futures>=0.9.7,<1.0.0',
     ],
-    extras_require={
-        'threadpool':  ['requests-futures>=0.9.7,<1.0.0'],
-    },
 
     packages=[
         'popget',

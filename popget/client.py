@@ -1,31 +1,18 @@
 from functools import partial
 from six import add_metaclass
-from typing import Any, Callable, Dict, Optional, Set, Tuple, Type, TypeVar, Union  # noqa
+from typing import Any, Callable, Type
 
-from mypy_extensions import Arg, DefaultArg, KwArg
 import requests
 from requests.exceptions import Timeout
 
 from popget.conf import settings
 from popget.endpoint import APIEndpoint, BodyType, BODY_CONTENT_TYPES, NO_DEFAULT
 from popget.errors import MissingRequiredArg
-from popget.extratypes import ResponseTypes  # noqa
+from popget.extratypes import ResponseTypes
 from popget.utils import get_base_attr, update_nested
 
 
-ClientMethod = Callable[
-    [
-        Arg(Type['APIClient'], 'cls'),
-        DefaultArg(Optional[Dict[Any, Any]], '_request_kwargs'),
-        DefaultArg(Optional[requests.Session], '_session'),
-        KwArg(object),
-    ],
-    Union[ResponseTypes, object]
-]
-
-
-def method_factory(endpoint, client_method_name):
-    # type: (APIEndpoint, str) -> ClientMethod
+def method_factory(endpoint: APIEndpoint, client_method_name: str):
     """
     Kwargs:
         endpoint: the endpoint to generate a callable method for
@@ -36,8 +23,9 @@ def method_factory(endpoint, client_method_name):
         In turn the method returns response content, either string or
         deserialized JSON data.
     """
-    def _prepare_request(base_url, _request_kwargs=None, **call_kwargs):
-        # type: (str, Optional[Dict], **Any) -> Tuple[str, Dict[str, Dict]]
+    def _prepare_request(
+        base_url: str, _request_kwargs: dict | None = None, **call_kwargs
+    ) -> tuple[str, dict[str, dict]]:
         """
         Kwargs:
             base_url: base url of API
@@ -100,12 +88,12 @@ def method_factory(endpoint, client_method_name):
 
         return url, request_kwargs
 
-    def client_method(cls,  # type: Type[APIClient]
-                      _request_kwargs=None,  # type: Optional[Dict]
-                      _session=None,  # type: requests.Session
-                      **call_kwargs
-                      ):
-        # type: (...) -> Union[ResponseTypes, object]
+    def client_method(
+        cls,
+        _request_kwargs: dict | None = None,
+        _session: requests.Session | None = None,
+        **call_kwargs
+    ) -> ResponseTypes | object:
         """
         Returns:
             Response... for non-async clients this will be response content,
@@ -126,17 +114,16 @@ def method_factory(endpoint, client_method_name):
 
 class ConfigClass(object):
 
-    base_url = None  # type: str
-    session_cls = None  # type: Type[requests.Session]
-    _session = None  # type: requests.Session
+    base_url: str
+    session_cls: Type[requests.Session]
+    _session: requests.Session | None = None
 
     def __init__(self, config):
         self.base_url = getattr(config, 'base_url', '')
         self.session_cls = getattr(config, 'session_cls', requests.Session)
 
     @property
-    def session(self):
-        # type: () -> requests.Session
+    def session(self) -> requests.Session:
         if not self._session:
             session = self.session_cls()
             session.headers['User-Agent'] = settings.CLIENT_DEFAULT_USER_AGENT
@@ -179,8 +166,9 @@ class APIClientMetaclass(type):
     config_class = ConfigClass
 
     @staticmethod
-    def add_methods_for_endpoint(methods, name, endpoint, config):
-        # type: (Dict[str, classmethod], str, APIEndpoint, Any) -> None
+    def add_methods_for_endpoint(
+        methods: dict[str, classmethod], name: str, endpoint: APIEndpoint, config: Any
+    ) -> None:
         methods[name] = classmethod(method_factory(endpoint, '_make_request'))
 
     def __new__(cls, name, bases, attrs):
@@ -198,8 +186,7 @@ class APIClientMetaclass(type):
         return type.__new__(cls, name, bases, attrs)
 
 
-def get_response_body(response):
-    # type: (requests.Response) -> ResponseTypes
+def get_response_body(response: requests.Response) -> ResponseTypes:
     """
     Kwargs:
         response: from requests lib
@@ -231,12 +218,12 @@ def get_response_body(response):
 @add_metaclass(APIClientMetaclass)
 class APIClient(object):
 
-    _config = None  # type: ConfigClass
+    _config: ConfigClass
 
     @staticmethod
-    def _request_kwargs(method, url, args, kwargs):
-        # type: (str, str, Tuple[Any, ...], Dict[str, Any]) -> None
-
+    def _request_kwargs(
+        method: str, url: str, args: tuple[Any, ...], kwargs: dict[str, Any]
+    ) -> None:
         if settings.CLIENT_DISABLE_VERIFY_SSL:
             kwargs['verify'] = False
 
@@ -245,9 +232,7 @@ class APIClient(object):
             kwargs['timeout'] = settings.CLIENT_TIMEOUT
 
     @staticmethod
-    def handle(call, request_url):
-        # type: (Callable[[], requests.Response], str) -> ResponseTypes
-
+    def handle(call: Callable[[], requests.Response], request_url: str) -> ResponseTypes:
         try:
             res = call()
         except Timeout as e:
@@ -262,8 +247,9 @@ class APIClient(object):
         return get_response_body(res)
 
     @classmethod
-    def _make_request(cls, method, url, session=None, *args, **kwargs):
-        # type: (str, str, Optional[requests.Session], *Any, **Any) -> ResponseTypes
+    def _make_request(
+        cls, method: str, url: str, session: requests.Session | None = None, *args, **kwargs
+    ) -> ResponseTypes:
         """
         Don't call this directly. Instead, add APIEndpoint instances to your
         APIClient sub-class definition. Accessor methods will be generated by

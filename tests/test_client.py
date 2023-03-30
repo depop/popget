@@ -1,6 +1,9 @@
+from unittest.mock import patch
+
+from _pytest import fixtures
+from _pytest.fixtures import fixture
 from six.moves.urllib import parse as urlparse
 
-from flexisettings.utils import override_settings
 from urllib3.exceptions import ConnectTimeoutError
 import pytest
 import requests
@@ -512,12 +515,14 @@ class TimeoutService(DummyService):
         base_url = 'http://10.255.255.1/'
 
 
-@override_settings(settings, CLIENT_TIMEOUT=1)
 def test_timeout():
     """
     Test APIClient behaviour when the requests library timeout threshold is reached
     """
-    with pytest.raises(requests.exceptions.HTTPError) as exc_info:
+    with (
+        pytest.raises(requests.exceptions.HTTPError) as exc_info,
+        patch('popget.client.settings.CLIENT_TIMEOUT', 1.0)
+    ):
         TimeoutService.thing_detail(id=777)
 
     e = exc_info.value

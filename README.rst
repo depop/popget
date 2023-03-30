@@ -31,21 +31,14 @@ as your existing Django ``settings.py``.
 To bootstrap this, there are a couple of env vars to control how config
 is loaded:
 
--  ``POPGET_APP_CONFIG``
-   should be an import path to a python module, for example:
-   ``POPGET_APP_CONFIG=django.conf.settings``
--  ``POPGET_CONFIG_NAMESPACE``
-   Sets the prefix used for loading further config values from env and
-   config file. Defaults to ``POPGET``.
-
-See source of ``popget/conf/defaults.py`` for more details.
+See source of ``popget/conf/settings.py`` for more details.
 
 Some useful config keys (all of which are prefixed with
 ``POPGET_`` by default):
 
--  ``<namespace>_CLIENT_DEFAULT_USER_AGENT`` when making requests, popget will use this
+-  ``POPGET_CLIENT_DEFAULT_USER_AGENT`` when making requests, popget will use this
    string as the user agent.
--  ``<namespace>_CLIENT_TIMEOUT`` if ``None`` then no timeout, otherwise this timeout
+-  ``POPGET_CLIENT_TIMEOUT`` if ``None`` then no timeout, otherwise this timeout
    (in seconds) will be applied to all requests. Requests which timeout will
    return a 504 response, which will be raised as an ``HTTPError``.
 
@@ -313,31 +306,11 @@ Compatibility
 This project is tested against:
 
 =========== ===
-Python 2.7   * 
-Python 3.7   * 
+Python 3.11   *
 =========== ===
 
 Running the tests
 -----------------
-
-CircleCI
-~~~~~~~~
-
-| The easiest way to test the full version matrix is to install the
-  CircleCI command line app:
-| https://circleci.com/docs/2.0/local-jobs/
-| (requires Docker)
-
-The cli does not support 'workflows' at the moment so you have to run
-the two Python version jobs separately:
-
-.. code:: bash
-
-    circleci build --job python-2.7
-
-.. code:: bash
-
-    circleci build --job python-3.7
 
 py.test (single python version)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -349,6 +322,6 @@ Decide which Python version you want to test and create a virtualenv:
 
 .. code:: bash
 
-    pyenv virtualenv 3.7.4 popget
+    python -m virtualenv .venv -p python3.11
     pip install -r requirements-test.txt
-    py.test -v -s --ipdb tests/
+    py.test -v -s tests/

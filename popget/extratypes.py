@@ -1,12 +1,12 @@
-from typing import Any, Dict, List, Union
+from typing import Any
 
 
 _T = Any  # should be 'JSONTypes' but mypy doesn't support recursive types yet
 
-JSONTypes = Union[Dict[str, _T], List[_T], str, float, bool, None]
+JSONTypes = dict[str, _T] | list[_T] | str | float | bool | None
 
-JSONObject = Dict[str, JSONTypes]
+JSONObject = dict[str, JSONTypes]
 
-JSONList = List[JSONTypes]
+JSONList = list[JSONTypes]
 
-ResponseTypes = Union[bytes, JSONTypes]
+ResponseTypes = bytes | JSONTypes
