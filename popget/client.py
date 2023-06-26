@@ -126,6 +126,7 @@ class ConfigClass(object):
     def session(self) -> requests.Session:
         if not self._session:
             session = self.session_cls()
+            session.headers.update(settings.CLIENT_DEFAULT_HEADERS)
             session.headers['User-Agent'] = settings.CLIENT_DEFAULT_USER_AGENT
             self._session = session
         return self._session

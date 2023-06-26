@@ -38,6 +38,9 @@ Some useful config keys (all of which are prefixed with
 
 -  ``POPGET_CLIENT_DEFAULT_USER_AGENT`` when making requests, popget will use this
    string as the user agent.
+-  ``POPGET_CLIENT_DEFAULT_HEADERS`` when making requests, popget will add these
+   headers by default to the request, but they can still be overridden when set
+   explicitly.
 -  ``POPGET_CLIENT_TIMEOUT`` if ``None`` then no timeout, otherwise this timeout
    (in seconds) will be applied to all requests. Requests which timeout will
    return a 504 response, which will be raised as an ``HTTPError``.
