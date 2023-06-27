@@ -167,6 +167,31 @@ def test_request_header_args_ok():
     }
     assert endpoint.required_args == {'user_id', 'token', 'edition'}
 
+@responses.activate
+def test_default_request_header_ok():
+    """
+    Default request-header are present.
+    """
+    with (
+        patch(
+            'popget.client.settings.CLIENT_DEFAULT_HEADERS',
+            {'Accept-Encoding': 'gzip', 'X-Depop-Pointless': 'default'}
+        )
+    ):
+        def callback(request):
+            assert 'Accept-Encoding' in request.headers
+            assert 'gzip' in request.headers['Accept-Encoding']
+            assert 'X-Depop-Pointless' in request.headers
+            assert 'explicitly pointless' in request.headers['X-Depop-Pointless']
+
+            return (200, {}, '{"thing": "it\'s a thing"}')
+
+        responses.add_callback(responses.GET, 'http://example.com/v1/thing/777',
+                               callback=callback,
+                               content_type='application/json')
+
+        data = DummyService.thing_detail(id=777)
+        assert len(responses.calls) == 1
 
 def test_request_header_args_clash():
     """
@@ -230,6 +255,9 @@ class DummyService(APIClient):
     thing_detail = APIEndpoint(
         'GET',
         '/v1/thing/{id}',
+        request_headers={
+            'X-Depop-Pointless': 'explicitly pointless',
+        }
     )
     thing_update = APIEndpoint(
         'PATCH',
