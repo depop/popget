@@ -1,0 +1,91 @@
+version: 2
+registries:
+  artifactory-npm:
+    type: npm-registry
+    url: https://depop.jfrog.io/artifactory/api/npm/depop-npm/
+    token: ${{ secrets.DEPOP_JFROG_TOKEN }}
+  artifactory-maven:
+    type: maven-repository
+    url: https://depop.jfrog.io/artifactory/depop-clean-scala-maven
+    username: ${{ secrets.DEPOP_JFROG_USERNAME }}
+    password: ${{ secrets.DEPOP_JFROG_PASS }}
+  artifactory-pip:
+    type: python-index
+    url: https://depop.jfrog.io/artifactory/api/pypi/depop-python/simple
+    username: ${{ secrets.DEPOP_JFROG_USERNAME }}
+    password: ${{ secrets.DEPOP_JFROG_PASS }}
+  artifactory-docker:
+    type: docker-registry
+    url: depop-depop-docker.jfrog.io
+    username: ${{ secrets.DEPOP_JFROG_USERNAME }}
+    password: ${{ secrets.DEPOP_JFROG_PASS }}
+  artifactory-rubygems:
+    type: rubygems-server
+    url: https://depop.jfrog.io/artifactory/api/gems/depop-gems
+    token: ${{ secrets.DEPOP_JFROG_TOKEN }}
+  artifactory-go:
+    type: goproxy-server
+    url: https://depop.jfrog.io/artifactory/api/depop-go
+    username: ${{ secrets.DEPOP_JFROG_USERNAME }}
+    password: ${{ secrets.DEPOP_JFROG_PASS }}
+updates:
+  - package-ecosystem: npm
+    directories:
+      - "/**/*"
+    registries:
+      - artifactory-npm
+    schedule:
+      interval: weekly
+      timezone: Europe/London
+    open-pull-requests-limit: 10
+  - package-ecosystem: maven
+    directories:
+      - "/**/*"
+    registries:
+      - artifactory-maven
+    schedule:
+      interval: weekly
+      timezone: Europe/London
+    open-pull-requests-limit: 10
+  - package-ecosystem: pip
+    directories:
+      - "/**/*"
+    registries:
+      - artifactory-pip
+    schedule:
+      interval: weekly
+      timezone: Europe/London
+    open-pull-requests-limit: 10
+  - package-ecosystem: docker
+    directories:
+      - "/**/*"
+    registries:
+      - artifactory-docker
+    schedule:
+      interval: weekly
+      timezone: Europe/London
+    open-pull-requests-limit: 10
+  - package-ecosystem: gomod
+    directories:
+      - "/**/*"
+    registries:
+      - artifactory-go
+    schedule:
+      interval: weekly
+      timezone: Europe/London
+    open-pull-requests-limit: 10
+  - package-ecosystem: bundler
+    directories:
+      - "/**/*"
+    registries:
+      - artifactory-rubygems
+    schedule:
+      interval: weekly
+      timezone: Europe/London
+    open-pull-requests-limit: 10
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      timezone: Europe/London
+    open-pull-requests-limit: 10
